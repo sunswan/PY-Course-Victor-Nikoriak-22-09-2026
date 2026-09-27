@@ -6,7 +6,7 @@
 
 | Модуль | Уроки (за v5.0) | Сторінка |
 |---|---|---|
-| М1. Python Core | 1–17 | [m1/index.md](m1/index.md) |
+| М1. Основи Python | 1–17 | [m1/index.md](m1/index.md) |
 | М2. Python Advanced | 18–28 | [m2_python_advanced.md](m2_python_advanced.md) |
 | М3. Бази даних | 29–30 | [m3_databases.md](m3_databases.md) |
 | М4. Web (+ Web Advanced) | 31–47 | [m4_web.md](m4_web.md) |
