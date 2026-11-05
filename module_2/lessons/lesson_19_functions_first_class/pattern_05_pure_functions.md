@@ -1,7 +1,7 @@
 # Патерн 5: Pure Functions & Immutability (Чисті функції)
 
 > **Рівень:** Beginner → Intermediate
-> **Урок:** 13 — Functions as First-Class Objects
+> **Урок:** 19 — Functions as First-Class Objects
 > **Модуль:** Module 2 — Python Intermediate
 
 ---

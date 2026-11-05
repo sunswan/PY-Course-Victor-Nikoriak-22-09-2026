@@ -21,6 +21,42 @@
       "title": "Бонус. Pandas: аналіз даних, графіки і Dash",
       "type": "Урок (бонус)"
     },
+    "lesson_deque_queue": {
+      "module": 3,
+      "after": 29,
+      "title": "Бонус. Stack, Queue, Deque: архітектура потоку даних",
+      "type": "Урок (бонус)"
+    },
+    "lesson_list_data_structure": {
+      "module": 3,
+      "after": 29,
+      "title": "Бонус. Структури даних: список як архітектурне рішення",
+      "type": "Урок (бонус)"
+    },
+    "lesson_search_hashing": {
+      "module": 3,
+      "after": 29,
+      "title": "Бонус. Алгоритми пошуку та хешування",
+      "type": "Урок (бонус)"
+    },
+    "lesson_trees": {
+      "module": 3,
+      "after": 29,
+      "title": "Бонус. Дерева та алгоритми дерев",
+      "type": "Урок (бонус)"
+    },
+    "lesson_sorting": {
+      "module": 3,
+      "after": 29,
+      "title": "Бонус. Алгоритми сортування: від Big-O до реального заліза",
+      "type": "Урок (бонус)"
+    },
+    "lesson_graphs": {
+      "module": 3,
+      "after": 29,
+      "title": "Бонус. Теорія графів, BFS/DFS, Dijkstra та Neo4j",
+      "type": "Урок (бонус)"
+    },
     "linux_devops": {
       "module": 5,
       "after": 48,

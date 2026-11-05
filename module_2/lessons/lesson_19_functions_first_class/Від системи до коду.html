@@ -1,0 +1,1016 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Від системи до коду</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: маршрут кур'єра — зверху лінія станцій (рівнів), під нею сцена "Система | Код", знизу навігація */
+:root{
+  --bg:#ECEFF2; --panel:#FAFBFC; --panel-2:#E2E7EB; --ink:#15202B; --muted:#52616E; --line:#C7D0D7;
+  --accent:#E0A100; --accent-ink:#7A5600; --on-accent:#1A1300;
+  --core:#1F5FA8; --core-soft:#DCE8F6; --edge:#B9491A; --edge-soft:#F7E2D7;
+  --good:#2C7A4B; --good-soft:#DCF0E3; --bad:#B3261E; --bad-soft:#F8DEDB;
+  --code-bg:#141C24; --code-fg:#DDE5EC; --code-dim:#7D8C99; --code-kw:#F2B705; --code-str:#8FD19E; --code-num:#F29B6B; --code-dec:#7FB4F0;
+  --f-display:'Unbounded','Trebuchet MS',sans-serif; --f-body:'Onest','Segoe UI',Arial,sans-serif; --f-mono:'JetBrains Mono',Consolas,'Courier New',monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E151C; --panel:#16202A; --panel-2:#1D2934; --ink:#E5EBF0; --muted:#95A5B2; --line:#2B3A47;
+  --accent:#F2B705; --accent-ink:#F2B705; --on-accent:#1A1300;
+  --core:#79B0EE; --core-soft:#1B2E44; --edge:#F2915A; --edge-soft:#3A2418;
+  --good:#5FC78C; --good-soft:#173324; --bad:#F2786E; --bad-soft:#3B1D1B;
+  --code-bg:#0A1016; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E151C; --panel:#16202A; --panel-2:#1D2934; --ink:#E5EBF0; --muted:#95A5B2; --line:#2B3A47;
+  --accent:#F2B705; --accent-ink:#F2B705; --on-accent:#1A1300;
+  --core:#79B0EE; --core-soft:#1B2E44; --edge:#F2915A; --edge-soft:#3A2418;
+  --good:#5FC78C; --good-soft:#173324; --bad:#F2786E; --bad-soft:#3B1D1B;
+  --code-bg:#0A1016; color-scheme:dark}
+
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5;display:flex;flex-direction:column}
+*{box-sizing:border-box}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));width:100%;max-width:1320px;margin:0 auto}
+
+/* top: route */
+header{border-bottom:1px solid var(--line);background:var(--panel);flex:none}
+header .wrap{display:flex;align-items:center;gap:20px;padding-block:12px;flex-wrap:wrap}
+.brand{font-family:var(--f-display);font-weight:700;font-size:15px;letter-spacing:.02em;white-space:nowrap}
+.brand span{color:var(--accent-ink)}
+.route{flex:1;min-width:260px;display:flex;align-items:center;position:relative;height:34px}
+.route::before{content:"";position:absolute;left:10px;right:10px;top:50%;height:4px;margin-top:-2px;background:var(--line);border-radius:2px}
+.route .fill{position:absolute;left:10px;top:50%;height:4px;margin-top:-2px;background:var(--accent);border-radius:2px;transition:width .4s}
+.route ol{list-style:none;margin:0;padding:0;display:flex;justify-content:space-between;width:100%;position:relative}
+.stop{width:22px;height:22px;border-radius:50%;border:3px solid var(--line);background:var(--panel);cursor:pointer;padding:0;position:relative;display:grid;place-items:center;font-size:10px;font-weight:700;color:transparent}
+.stop.done{border-color:var(--good);background:var(--good);color:var(--panel)}
+.stop.cur{border-color:var(--accent);background:var(--accent);transform:scale(1.25);color:var(--on-accent)}
+.stars{font-variant-numeric:tabular-nums;font-size:14px;color:var(--muted);white-space:nowrap}
+.stars b{color:var(--ink)}
+
+main{flex:1;overflow-y:auto;min-height:0}
+main .wrap{padding-block:28px 40px}
+.slide{display:flex;flex-direction:column;gap:22px;animation:in .35s ease}
+.slide[hidden]{display:none}
+@keyframes in{from{transform:translateY(8px);opacity:.4}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.slide{animation:none}.route .fill{transition:none}}
+
+.eyebrow{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-ink);font-weight:600}
+h1,h2{font-family:var(--f-display);font-weight:700;text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(30px,5vw,56px)}
+h2{font-size:clamp(24px,3.2vw,36px)}
+h3{font-size:17px;margin:0;font-weight:700}
+.lead{font-size:18px;max-width:68ch;color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+p{margin:0}
+
+.stage{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:920px){.stage{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.panel-h{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.tag{font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--muted)}
+.mission{background:var(--panel-2);border-radius:10px;padding:12px 14px;font-size:15px}
+.mission b{color:var(--accent-ink)}
+
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:8px 16px;cursor:pointer;font-weight:600;font-size:15px;transition:background .15s,border-color .15s}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.primary:hover{filter:brightness(1.05)}
+.btn.small{padding:4px 10px;font-size:13px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+.fb{border-radius:10px;padding:10px 14px;font-size:15px;display:none}
+.fb.show{display:block}
+.fb.ok{background:var(--good-soft);color:var(--ink);border-left:4px solid var(--good)}
+.fb.err{background:var(--bad-soft);color:var(--ink);border-left:4px solid var(--bad)}
+.fb.info{background:var(--panel-2);border-left:4px solid var(--accent)}
+
+/* code panel */
+.codebox{position:relative;border-radius:14px;overflow:hidden;background:var(--code-bg);min-width:0}
+.codebox .bar{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;color:var(--code-dim);font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;border-bottom:1px solid #ffffff14}
+.codebox pre{margin:0;padding:16px;overflow-x:auto;font-family:var(--f-mono);font-size:13.5px;line-height:1.6;color:var(--code-fg);tab-size:4}
+.codebox .lock{position:absolute;inset:41px 0 0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:var(--code-bg);color:var(--code-fg);text-align:center;padding:24px}
+.codebox .lock p{color:var(--code-dim);max-width:30ch}
+.codebox.open .lock{display:none}
+.codebox:not(.open) pre{filter:blur(6px);user-select:none;max-height:300px;overflow:hidden}
+.kw{color:var(--code-kw)}.st{color:var(--code-str)}.cm{color:var(--code-dim);font-style:italic}.nu{color:var(--code-num)}.de{color:var(--code-dec)}
+.insight{border-left:4px solid var(--accent);padding:4px 0 4px 14px;font-size:15px;color:var(--ink)}
+
+/* intro ladder */
+.ladder{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.ladder{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.rung{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:6px}
+.rung .n{font-family:var(--f-display);font-size:28px;color:var(--accent-ink)}
+.rung p{color:var(--muted);font-size:14px}
+
+/* L1 sort chips */
+.sortlist{display:flex;flex-direction:column;gap:8px}
+.sitem{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;flex-wrap:wrap}
+.sitem .lbl{font-weight:500;min-width:0}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;flex:none}
+.seg button{border:0;background:transparent;padding:5px 11px;font-size:13px;cursor:pointer;font-weight:600;color:var(--muted)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--ink);color:var(--panel)}
+.sitem.right{border-color:var(--good);background:var(--good-soft)}
+.sitem.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.sitem .why{flex-basis:100%;font-size:13px;color:var(--muted);display:none}
+.sitem.right .why,.sitem.wrong .why{display:block}
+.box3{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center;gap:8px;font-size:14px;text-align:center}
+.box3 div{border:2px dashed var(--line);border-radius:10px;padding:10px 6px;min-height:48px;display:grid;place-items:center}
+.box3 .bb{background:var(--ink);color:var(--panel);border:0;font-family:var(--f-display);font-size:13px}
+.box3 .ar{border:0;min-height:0;color:var(--muted);font-size:18px}
+
+/* L2 conveyor */
+.belt{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;position:relative}
+@media (max-width:560px){.belt{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.slot{min-height:104px;border:2px dashed var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:4px;justify-content:space-between;background:transparent;cursor:pointer;text-align:left}
+.slot .k{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.08em}
+.slot.filled{border-style:solid;border-color:var(--core);background:var(--core-soft)}
+.slot .fn{font-family:var(--f-mono);font-size:13px;font-weight:600;word-break:break-word}
+.slot .val{font-variant-numeric:tabular-nums;font-weight:700;font-size:18px}
+.parts{display:flex;flex-wrap:wrap;gap:8px}
+.part{border:1px solid var(--core);color:var(--core);background:var(--panel);border-radius:999px;padding:7px 14px;cursor:pointer;font-weight:600;font-size:14px}
+.part[disabled]{opacity:.3;cursor:default}
+.ticket{font-family:var(--f-mono);font-size:13px;background:var(--panel-2);border-radius:10px;padding:10px 12px;overflow-x:auto}
+
+/* L3 cards */
+.zones{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.zone{border-radius:12px;padding:12px;min-height:60px;display:flex;flex-direction:column;gap:6px}
+.zone.core{background:var(--core-soft);border:2px solid var(--core)}
+.zone.edge{background:var(--edge-soft);border:2px solid var(--edge)}
+.zone h3{font-size:14px}
+.zone.core h3{color:var(--core)}.zone.edge h3{color:var(--edge)}
+.zone p{font-size:13px;color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media (max-width:560px){.cards{grid-template-columns:minmax(0,1fr)}}
+.card{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card code{font-family:var(--f-mono);font-size:12.5px;word-break:break-word}
+.card .row{gap:6px}
+.card .b-core.on{background:var(--core);color:var(--panel);border-color:var(--core)}
+.card .b-edge.on{background:var(--edge);color:var(--panel);border-color:var(--edge)}
+.card.right{border-color:var(--good);background:var(--good-soft)}
+.card.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.card .why{font-size:13px;color:var(--muted);display:none}
+.card.right .why,.card.wrong .why{display:block}
+
+/* L4 factory */
+.factory{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center}
+@media (max-width:560px){.factory{grid-template-columns:1fr}}
+.press{width:120px;height:120px;border-radius:16px;background:var(--ink);color:var(--panel);display:grid;place-items:center;text-align:center;font-family:var(--f-display);font-size:12px;padding:10px;position:relative}
+.press.stamp{animation:stamp .35s ease}
+@keyframes stamp{40%{transform:scaleY(.86)}100%{transform:none}}
+.field{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);font-weight:600}
+.field input[type=text],select{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:7px 10px;font-size:15px;color:var(--ink);font-weight:500}
+input[type=range]{accent-color:var(--accent);width:180px;max-width:100%}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line)}
+th{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+td code{font-family:var(--f-mono);font-size:13px}
+td.num{font-variant-numeric:tabular-nums;text-align:right}
+.twins{font-family:var(--f-mono);font-size:12.5px;color:var(--muted);background:var(--panel-2);border-radius:10px;padding:10px 12px;text-decoration:line-through;text-decoration-color:var(--bad);overflow-x:auto;white-space:pre}
+
+/* L5 callback */
+.hook{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:12px;align-items:center}
+@media (max-width:560px){.hook{grid-template-columns:minmax(0,1fr)}}
+.machine{border:2px solid var(--core);background:var(--core-soft);border-radius:12px;padding:14px;font-size:14px}
+.machine code{font-family:var(--f-mono);font-size:13px;font-weight:600}
+.socket{width:56px;height:56px;border-radius:50%;border:3px dashed var(--accent);display:grid;place-items:center;font-family:var(--f-mono);font-size:11px;font-weight:700;color:var(--accent-ink)}
+.socket.plugged{border-style:solid;background:var(--accent);color:var(--on-accent)}
+.phone{border:2px solid var(--ink);border-radius:18px;padding:12px;min-height:120px;display:flex;flex-direction:column;gap:6px;font-size:13px}
+.phone .msg{background:var(--panel-2);border-radius:10px 10px 10px 2px;padding:8px 10px;animation:in .3s ease}
+.phone .msg b{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.phone .msg.err{background:var(--bad-soft);font-family:var(--f-mono);font-size:12px}
+.plugs{display:flex;flex-wrap:wrap;gap:8px}
+.plug{font-family:var(--f-mono);font-size:13px;border:1px solid var(--edge);color:var(--edge);background:var(--panel);border-radius:8px;padding:7px 12px;cursor:pointer;font-weight:600}
+.plug.on{background:var(--edge);color:var(--panel)}
+.callline{font-family:var(--f-mono);font-size:14px;background:var(--panel-2);border-radius:8px;padding:8px 12px;overflow-x:auto;white-space:nowrap}
+.meter{font-size:14px;color:var(--muted)}.meter b{font-variant-numeric:tabular-nums;color:var(--good);font-size:18px}
+
+/* L6 decorator rings */
+.rings{display:flex;justify-content:center;padding:8px 0}
+.ring{border-radius:18px;padding:26px 14px 14px;position:relative;transition:opacity .2s,padding .2s,border-color .2s}
+.ring>.rl{position:absolute;top:6px;left:14px;font-family:var(--f-mono);font-size:12px;font-weight:700}
+.ring.log{border:2px solid var(--core);background:var(--core-soft)}
+.ring.log>.rl{color:var(--core)}
+.ring.role{border:2px solid var(--edge);background:var(--edge-soft)}
+.ring.role>.rl{color:var(--edge)}
+.ring.off{border-style:dashed;background:transparent;opacity:.45}
+.corefn{background:var(--ink);color:var(--panel);border-radius:12px;padding:14px 18px;font-family:var(--f-mono);font-size:13px;text-align:center}
+.trace{font-family:var(--f-mono);font-size:13px;display:flex;flex-direction:column;gap:4px;min-height:40px}
+.trace div{padding:5px 10px;border-radius:6px;background:var(--panel-2);animation:in .25s ease both}
+.trace .bad{background:var(--bad-soft)}.trace .ok{background:var(--good-soft)}
+.toggles{display:flex;gap:16px;flex-wrap:wrap;font-size:14px}
+.toggles label{display:flex;align-items:center;gap:6px;cursor:pointer;font-family:var(--f-mono)}
+.toggles input{accent-color:var(--accent);width:18px;height:18px}
+
+/* L7 full run */
+.line{display:flex;flex-direction:column;gap:0}
+.st-row{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:center;padding:8px 0;position:relative}
+.st-row .dot{width:18px;height:18px;border-radius:50%;border:3px solid var(--line);background:var(--panel);margin-left:5px;position:relative;z-index:1}
+.st-row::before{content:"";position:absolute;left:12px;top:0;bottom:0;width:4px;background:var(--line)}
+.st-row:first-child::before{top:50%}.st-row:last-child::before{bottom:50%}
+.st-row.edge .dot{border-radius:4px}
+.st-row.lit .dot{background:var(--accent);border-color:var(--accent)}
+.st-row.edge.lit .dot{background:var(--edge);border-color:var(--edge)}
+.st-row .nm{font-family:var(--f-mono);font-size:13.5px;font-weight:600}
+.st-row .ds{font-size:13px;color:var(--muted)}
+.st-row .v{font-variant-numeric:tabular-nums;font-weight:700;opacity:0;transition:opacity .2s;white-space:nowrap}
+.st-row.lit .v{opacity:1}
+.legend{display:flex;gap:16px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--accent);margin-right:6px;vertical-align:-1px}
+.legend i.e{border-radius:3px;background:var(--edge)}
+
+/* final */
+.algo{display:flex;flex-direction:column;gap:0;counter-reset:a}
+.algo li{display:grid;grid-template-columns:44px minmax(0,1fr) minmax(0,220px);gap:14px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line);list-style:none}
+.algo li::before{counter-increment:a;content:counter(a);font-family:var(--f-display);font-size:22px;color:var(--accent-ink)}
+.algo .q{font-weight:600;font-size:16px}
+.algo .p{font-family:var(--f-mono);font-size:13px;color:var(--core);font-weight:600}
+@media (max-width:560px){.algo li{grid-template-columns:36px minmax(0,1fr)}.algo .p{grid-column:2}}
+.algo{padding:0;margin:0}
+
+/* L2 data-flow stepper */
+.phases{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:760px){.phases{grid-template-columns:1fr}}
+.phase{display:flex;gap:12px;align-items:flex-start;font-size:15px}
+.phase code{font-family:var(--f-mono);font-size:13px;background:var(--panel-2);padding:1px 5px;border-radius:4px}
+.ph-n{flex:none;width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--panel);display:grid;place-items:center;font-family:var(--f-display);font-size:14px}
+.flowline{display:grid;grid-template-columns:repeat(var(--n,6),minmax(0,1fr));gap:28px;padding-block:8px}
+.fnode.k-io .fbox{border-color:var(--line);background:var(--panel-2)}
+.fnode.k-edge .fbox{border-color:var(--edge);background:var(--edge-soft)}
+.fnode.k-black .fbox{border-color:var(--ink);background:var(--ink)}
+.fnode.k-black .fbox code,.fnode.k-black .fbox span{color:var(--panel)}
+.fnode.k-wrap .fbox{border-style:dashed}
+.fnode.k-hook .fbox{border:2px dashed var(--accent-ink);background:transparent}
+.fnode.k-fact .fbox{border-color:var(--ink);background:var(--panel)}
+.parcel.bad{background:var(--bad-soft);color:var(--ink)}
+.parcel.good{background:var(--good-soft);color:var(--ink)}
+.parcel{font-size:14px;word-break:break-word}
+@media (max-width:860px){.flowline{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:520px){.flowline{grid-template-columns:minmax(0,1fr)}}
+.fnode{position:relative;display:flex;flex-direction:column;gap:6px;min-width:0}
+.fnode:not(:last-child)::after{content:"→";position:absolute;right:-22px;top:58px;color:var(--muted);font-size:18px}
+@media (max-width:520px){.fnode:not(:last-child)::after{content:"↓";right:auto;left:50%;top:auto;bottom:-26px}}
+.knob{font-family:var(--f-mono);font-size:12px;text-align:center;border:1px dashed var(--accent-ink);color:var(--accent-ink);border-radius:999px;padding:3px 6px;min-height:24px}
+.knob.none{border-color:var(--line);color:var(--muted)}
+.knob.io{visibility:hidden}
+.fbox{border:2px solid var(--core);background:var(--core-soft);border-radius:12px;padding:12px 8px;text-align:center;min-height:70px;display:flex;flex-direction:column;justify-content:center;gap:2px;transition:transform .2s,box-shadow .2s}
+.fbox code{font-family:var(--f-mono);font-size:13px;font-weight:600;word-break:break-word}
+.fbox span{font-size:13px;color:var(--muted)}
+.fnode.io .fbox{border-color:var(--edge);background:var(--edge-soft)}
+.fnode.on .fbox{border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 35%,transparent);transform:translateY(-3px)}
+.parcel{font-variant-numeric:tabular-nums;font-weight:700;text-align:center;border-radius:8px;padding:6px;font-size:15px;min-height:36px;background:transparent;color:var(--muted);transition:background .2s}
+.fnode.passed .parcel{color:var(--ink)}
+.fnode.on .parcel{background:var(--accent);color:var(--on-accent)}
+.flowfoot{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:760px){.flowfoot{grid-template-columns:minmax(0,1fr)}}
+.codebox.mini pre{font-size:14px}
+.codebox.mini .ln{display:block;padding:0 6px;border-radius:4px}
+.codebox.mini .ln.hl{background:#F2B70533;box-shadow:inset 3px 0 0 #F2B705}
+.vars{display:flex;flex-direction:column;gap:8px;min-width:0}
+.fvars{font-family:var(--f-mono);font-size:13.5px;display:flex;flex-direction:column;gap:4px}
+.fvars div{background:var(--panel-2);border-radius:6px;padding:6px 10px;overflow-x:auto;white-space:nowrap}
+.fl-say{font-size:15px;border-left:4px solid var(--accent);padding-left:12px}
+
+footer{flex:none;border-top:1px solid var(--line);background:var(--panel);padding-bottom:env(safe-area-inset-bottom,0px)}
+footer .wrap{display:flex;justify-content:space-between;align-items:center;padding-block:10px;gap:12px}
+.pos{font-variant-numeric:tabular-nums;color:var(--muted);font-size:14px;text-align:center}
+.pos b{color:var(--ink)}
+</style>
+
+<header><div class="wrap">
+  <div class="brand">Смачно <span>+</span> Таксі · маршрут архітектора</div>
+  <div class="route" aria-label="Маршрут рівнів"><div class="fill" id="routeFill"></div><ol id="route"></ol></div>
+  <div class="stars">Станцій пройдено: <b id="starCount">0</b> / 7</div>
+</div></header>
+
+<main id="main"><div class="wrap" id="slides">
+
+<!-- 0 INTRO -->
+<section class="slide" data-title="Старт">
+  <div class="eyebrow">Гра-тренажер · Модуль 2 · Урок 19</div>
+  <h1>Від системи до коду</h1>
+  <p class="lead">Власниця «Смачно + Таксі» щотижня просить нове: промокоди <b>SUMMER10</b>, <b>VIP20</b>, <b>WELCOME5</b>, тариф за районом, повідомлення в SMS і Telegram. У коді модуля 1 кожне прохання означало ще один <b>elif</b>. Сьогодні ти спроєктуєш систему <b>зверху вниз</b>: спершу схема, потім функції, і лише наприкінці код.</p>
+  <div class="ladder">
+    <div class="rung"><div class="n">1</div><h3>Система</h3><p>Чорний ящик: що входить, що виходить.</p></div>
+    <div class="rung"><div class="n">2</div><h3>Потік</h3><p>З яких кроків складається перетворення.</p></div>
+    <div class="rung"><div class="n">3</div><h3>Функції</h3><p>Чисте ядро, краї, фабрики, гачки, обгортки.</p></div>
+    <div class="rung"><div class="n">4</div><h3>Код</h3><p>Python, який повторює схему рядок у рядок.</p></div>
+  </div>
+  <div class="panel">
+    <h3>Правила маршруту</h3>
+    <p>Сім станцій. На кожній зліва задача на схемі системи, справа закритий код. Розв'яжи задачу, і код відкриється: побачиш, як твоє рішення виглядає в Python. Зелена станція на лінії вгорі означає «пройдено».</p>
+    <div class="row"><button class="btn primary" data-go="1">Почати маршрут</button><span class="meter">Стрілки ← → на клавіатурі гортають станції.</span></div>
+  </div>
+</section>
+
+<!-- 1 BLACK BOX -->
+<section class="slide" data-title="Чорний ящик" hidden>
+  <div class="eyebrow">Станція 1 · рівень «Система»</div>
+  <h2>Чорний ящик оформлення замовлення</h2>
+  <p class="lead">Перш ніж писати хоч одну функцію, домовся про <b>контракт</b>: що система отримує, що віддає і за якими правилами працює всередині. Як саме вона це робить, поки неважливо.</p>
+  <div class="stage">
+    <div class="panel">
+      <div class="panel-h"><span class="tag">Система</span></div>
+      <div class="box3" aria-hidden="true"><div>Вхід</div><div class="ar">→</div><div class="bb">checkout</div><div class="ar">→</div><div>Вихід</div></div>
+      <div class="mission">Місія: розклади кожен пункт: <b>Вхід</b>, <b>Правило</b> (живе всередині), <b>Вихід</b> чи <b>Зайве</b> (не стосується цієї системи).</div>
+      <div class="sortlist" id="l1list"></div>
+      <div class="row"><button class="btn primary" id="l1check">Перевірити</button></div>
+      <div class="fb" id="l1fb"></div>
+    </div>
+    <div class="codebox" data-code="1"><div class="bar"><span>Код · Python</span><span>контракт</span></div><pre></pre>
+      <div class="lock"><p>Код відкриється, коли контракт буде правильним.</p><button class="btn small" data-reveal="1">Показати код</button></div></div>
+  </div>
+</section>
+
+<!-- 2 PIPELINE -->
+<section class="slide" data-title="Конвеєр" hidden>
+  <div class="eyebrow">Станція 2 · рівень «Потік»</div>
+  <h2>Розклади ящик на станції конвеєра</h2>
+  <p class="lead">Всередині чорного ящика замовлення проходить кілька кроків. Кожен крок отримує замовлення і повертає нове. Вихід одного кроку стає входом наступного. Порядок кроків теж є бізнес-логікою.</p>
+  <div class="stage">
+    <div class="panel">
+      <div class="panel-h"><span class="tag">Система</span><button class="btn small" id="l2reset">Очистити</button></div>
+      <div class="ticket">order = {"total": 540, "district": "Оболонь", "promo": "SUMMER10"}<br>правило: знижка діє лише на страви, не на доставку</div>
+      <div class="mission">Місія: натискай кроки в тому порядку, у якому вони мають стояти на конвеєрі. Під кожною станцією видно суму після неї. Ціль: <b>566 грн</b>.</div>
+      <div class="parts" id="l2parts"></div>
+      <div class="belt" id="l2belt"></div>
+      <div class="row"><button class="btn primary" id="l2check">Перевірити конвеєр</button></div>
+      <div class="fb" id="l2fb"></div>
+    </div>
+    <div class="codebox" data-code="2"><div class="bar"><span>Код · Python</span><span>pipeline</span></div><pre></pre>
+      <div class="lock"><p>Збери правильний конвеєр, щоб побачити runner на 4 рядки.</p><button class="btn small" data-reveal="2">Показати код</button></div></div>
+  </div></section>
+
+<!-- 3 PURE CORE -->
+<section class="slide" data-title="Ядро і краї" hidden>
+  <div class="eyebrow">Станція 3 · рівень «Функції»</div>
+  <h2>Чисте ядро, брудні краї</h2>
+  <p class="lead">Конвеєр працює надійно лише тоді, коли його кроки <b>чисті</b>: той самий вхід завжди дає той самий вихід, і зовні нічого не змінюється. Файли, мережа, годинник і print теж потрібні, але вони живуть на краях системи.</p>
+  <div class="stage">
+    <div class="panel">
+      <div class="panel-h"><span class="tag">Система</span></div>
+      <div class="zones">
+        <div class="zone core"><h3>Ядро</h3><p>Обчислює. Повертає новий об'єкт. Тестується одним assert.</p></div>
+        <div class="zone edge"><h3>Край</h3><p>Торкається світу: файл, мережа, час, мутація чужих даних.</p></div>
+      </div>
+      <div class="mission">Місія: для кожної функції обери <b>Ядро</b> або <b>Край</b>.</div>
+      <div class="cards" id="l3cards"></div>
+      <div class="row"><button class="btn primary" id="l3check">Перевірити</button></div>
+      <div class="fb" id="l3fb"></div>
+    </div>
+    <div class="codebox" data-code="3"><div class="bar"><span>Код · Python</span><span>pure functions</span></div><pre></pre>
+      <div class="lock"><p>Розклади функції, щоб побачити різницю між append і +.</p><button class="btn small" data-reveal="3">Показати код</button></div></div>
+  </div>
+</section>
+
+<!-- 4 FACTORY -->
+<section class="slide" data-title="Довідник" hidden>
+  <div class="eyebrow">Станція 4 · рівень «Функції»</div>
+  <h2>Довідник промокодів і фабрика</h2>
+  <p class="lead">Промокоди відрізняються лише відсотком, тож відсоток — це <b>дані</b>, а не код. Замість функцій-близнюків тримаємо один довідник <b>PROMOS</b> (конфігурацію). Зв'язати його з функцією можна через partial або через фабрику, яка зберігає довідник у замиканні.</p>
+  <div class="stage">
+    <div class="panel">
+      <div class="panel-h"><span class="tag">Система</span></div>
+      <div class="twins">def apply_summer10(t): return t * 0.90
+def apply_vip20(t):    return t * 0.80
+def apply_welcome5(t): return t * 0.95   # і так для кожного коду</div>
+      <div class="mission">Місія: додай у довідник <b>VIP20</b> (20 %) та <b>WELCOME5</b> (5 %). Зверни увагу: код функцій праворуч при цьому не змінюється.</div>
+      <div class="factory">
+        <div class="press" id="press">PROMOS<br>довідник</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <label class="field" for="l4name">Назва промокоду<input type="text" id="l4name" value="VIP20" maxlength="12" autocomplete="off"></label>
+          <label class="field" for="l4pct">Знижка: <span id="l4pctv">20</span> %<input type="range" id="l4pct" min="5" max="30" step="5" value="20"></label>
+          <div class="row"><button class="btn primary" id="l4stamp">Додати в довідник</button></div>
+        </div>
+      </div>
+      <div style="overflow-x:auto"><table><thead><tr><th>Код у PROMOS</th><th>Відсоток</th><th>540 грн →</th></tr></thead><tbody id="l4reg"></tbody></table></div>
+      <div class="fb" id="l4fb"></div>
+    </div>
+    <div class="codebox" data-code="4"><div class="bar"><span>Код · Python</span><span>config + closure</span></div><pre></pre>
+      <div class="lock"><p>Додай обидва промокоди, щоб побачити код.</p><button class="btn small" data-reveal="4">Показати код</button></div></div>
+  </div>
+</section>
+
+<!-- 5 CALLBACK -->
+<section class="slide" data-title="Гачок" hidden>
+  <div class="eyebrow">Станція 5 · рівень «Функції»</div>
+  <h2>Гачок для повідомлень</h2>
+  <p class="lead">checkout знає, <b>коли</b> треба повідомити клієнта. Але не знає, <b>як</b>: SMS, Telegram чи пошта. Тому вона залишає гачок, параметр notify, у який ззовні підключають функцію.</p>
+  <div class="stage">
+    <div class="panel">
+      <div class="panel-h"><span class="tag">Система</span><span class="meter">Змінено рядків у checkout: <b>0</b></span></div>
+      <div class="hook">
+        <div class="machine"><code>checkout(order, notify)</code><br>рахує суму, потім викликає notify(bill)</div>
+        <div class="socket" id="socket">notify</div>
+        <div class="phone" id="phone" aria-live="polite"><span class="meter">Телефон клієнта</span></div>
+      </div>
+      <div class="mission">Місія: доставити повідомлення через <b>два різні канали</b>. Одна з вилок містить пастку.</div>
+      <div class="plugs" id="plugs"></div>
+      <div class="callline" id="callline">checkout(order, notify=?)</div>
+      <div class="fb" id="l5fb"></div>
+    </div>
+    <div class="codebox" data-code="5"><div class="bar"><span>Код · Python</span><span>callback</span></div><pre></pre>
+      <div class="lock"><p>Підключи два канали, щоб побачити код гачка.</p><button class="btn small" data-reveal="5">Показати код</button></div></div>
+  </div>
+</section>
+
+<!-- 6 DECORATOR -->
+<section class="slide" data-title="Охоронці" hidden>
+  <div class="eyebrow">Станція 6 · рівень «Функції»</div>
+  <h2>Охоронці навколо функції</h2>
+  <p class="lead">Змінювати тариф району може лише менеджер, і кожну зміну треба записати в журнал. Ці правила стосуються багатьох функцій, тому ми не вписуємо їх усередину, а <b>обгортаємо</b> функцію шарами ззовні.</p>
+  <div class="stage">
+    <div class="panel">
+      <div class="panel-h"><span class="tag">Система</span></div>
+      <div class="toggles">
+        <label for="t-log"><input type="checkbox" id="t-log" checked>@log_call</label>
+        <label for="t-role"><input type="checkbox" id="t-role" checked>@requires_role("manager")</label>
+      </div>
+      <div class="rings"><div class="ring log" id="ringLog"><span class="rl">@log_call</span><div class="ring role" id="ringRole"><span class="rl">@requires_role</span><div class="corefn">change_tariff(district, price)</div></div></div></div>
+      <div class="row">
+        <label class="field" for="l6role" style="flex-direction:row;align-items:center;gap:8px">Хто викликає:<select id="l6role"><option value="guest">guest</option><option value="courier">courier</option><option value="manager">manager</option></select></label>
+        <button class="btn primary" id="l6call">change_tariff("Поділ", 70)</button>
+      </div>
+      <div class="trace" id="l6trace" aria-live="polite"></div>
+      <div class="mission">Місія: з обома шарами отримай <b>PermissionError</b> для не-менеджера і <b>успішний виклик</b> для менеджера.</div>
+      <div class="fb" id="l6fb"></div>
+    </div>
+    <div class="codebox" data-code="6"><div class="bar"><span>Код · Python</span><span>decorator</span></div><pre></pre>
+      <div class="lock"><p>Пройди обидва сценарії, щоб побачити обгортки.</p><button class="btn small" data-reveal="6">Показати код</button></div></div>
+  </div>
+</section>
+
+<!-- 7 ASSEMBLE -->
+<section class="slide" data-title="Збірка" hidden>
+  <div class="eyebrow">Станція 7 · рівень «Код»</div>
+  <h2>Збери програму і запусти маршрут</h2>
+  <p class="lead">Усі рішення зі станцій складаються в одну програму. Краї на вході й виході, чисте ядро посередині, промокоди з твого довідника, канал через гачок. Обери замовлення і запусти.</p>
+  <div class="stage">
+    <div class="panel">
+      <div class="panel-h"><span class="tag">Система</span></div>
+      <div class="row">
+        <label class="field" for="l7dist">Район<select id="l7dist"><option>Поділ</option><option selected>Оболонь</option><option>Печерськ</option></select></label>
+        <label class="field" for="l7promo">Промокод<select id="l7promo"></select></label>
+        <label class="field" for="l7ch">Канал<select id="l7ch"><option value="send_sms">send_sms</option><option value="send_telegram">send_telegram</option><option value="send_email">send_email</option></select></label>
+      </div>
+      <div class="legend"><span><i></i>чисте ядро</span><span><i class="e"></i>край (побічний ефект)</span></div>
+      <div class="line" id="l7line"></div>
+      <div class="row"><button class="btn primary" id="l7run">Запустити замовлення на 540 грн</button></div>
+      <div class="fb" id="l7fb"></div>
+    </div>
+    <div class="codebox" data-code="7"><div class="bar"><span>Код · Python</span><span>delivery.py</span></div><pre></pre>
+      <div class="lock"><p>Запусти маршрут, щоб побачити всю програму.</p><button class="btn small" data-reveal="7">Показати код</button></div></div>
+  </div>
+</section>
+
+<!-- 8 FINAL -->
+<section class="slide" data-title="Алгоритм" hidden>
+  <div class="eyebrow">Кінцева · як проєктувати функціональну програму</div>
+  <h2>Сім питань перед першим рядком коду</h2>
+  <p class="lead" id="finalScore">Цей порядок питань працює для будь-якої системи, не лише для доставки.</p>
+  <div class="panel">
+    <ol class="algo">
+      <li><div class="q">Що входить у систему і що з неї виходить?</div><div class="p">контракт · чорний ящик</div></li>
+      <li><div class="q">З яких послідовних кроків складається перетворення?</div><div class="p">Pipeline · список функцій</div></li>
+      <li><div class="q">Що тут лише обчислює, а що торкається світу?</div><div class="p">Pure core · краї</div></li>
+      <li><div class="q">Які правила змінюються без зміни коду?</div><div class="p">конфігурація · partial / замикання</div></li>
+      <li><div class="q">Яку поведінку треба підключати ззовні?</div><div class="p">Callback · гачок</div></li>
+      <li><div class="q">Яке правило стосується багатьох функцій одразу?</div><div class="p">Decorator · обгортка</div></li>
+      <li><div class="q">Як усе з'єднати і запустити?</div><div class="p">runner + словник</div></li>
+    </ol>
+  </div>
+  <div class="panel">
+    <h3>Домашнє завдання: друга половина бізнесу, «Таксі»</h3>
+    <p>Пройди ті самі сім питань для розрахунку поїздки: базовий тариф за кілометр, нічний коефіцієнт, промокод, повідомлення водієві. Спершу намалюй чорний ящик і конвеєр на папері, потім напиши <code>make_multiplier</code>, список кроків <code>RIDE</code>, <code>run_pipeline</code> і гачок <code>notify_driver</code>.</p>
+    <div class="row"><button class="btn" id="restart">Пройти маршрут знову</button></div>
+  </div>
+</section>
+
+</div></main>
+
+<footer><div class="wrap">
+  <button class="btn" id="prev">← Назад</button>
+  <div class="pos" id="pos"></div>
+  <button class="btn primary" id="next">Далі →</button>
+</div></footer>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function hl(src){
+  const re=/(#.*$)|(f?"(?:[^"\\\n]|\\.)*"|f?'(?:[^'\\\n]|\\.)*')|(@[\w.]+)|\b(def|return|for|in|if|elif|else|raise|lambda|import|from|not|and|or|try|except|as|None|True|False|print)\b|\b(\d+(?:\.\d+)?)\b/gm;
+  let out='',last=0,m;
+  while((m=re.exec(src))){out+=esc(src.slice(last,m.index));const c=m[1]?'cm':m[2]?'st':m[3]?'de':m[4]?'kw':'nu';out+=`<span class="${c}">${esc(m[0])}</span>`;last=m.index+m[0].length;}
+  return out+esc(src.slice(last));
+}
+
+/* ---------- code per station ---------- */
+const CODE={
+1:`# Контракт системи: що входить і що виходить
+order = {"total": 540, "district": "Оболонь", "promo": "SUMMER10"}
+
+def checkout(order):          # ВХІД: замовлення (dict)
+    ...                       # ПРАВИЛА: PROMOS, TARIFFS, округлення
+    return bill               # ВИХІД: рахунок (новий dict)
+
+# Повідомлення клієнту теж вихід, але назовні:
+# це побічний ефект, він житиме на краю системи.
+# Колір кнопки сюди не входить: це інша система (UI).`,
+2:`from functools import partial
+
+# ДАНІ приходять під час виконання
+order = {"total": 540, "district": "Оболонь", "promo": "SUMMER10"}
+
+# КОНФІГУРАЦІЯ: правила, які змінюються без зміни коду
+PROMOS  = {"SUMMER10": 10, "VIP20": 20, "WELCOME5": 5}
+TARIFFS = {"Поділ": 60, "Оболонь": 80}
+
+def validate(order):
+    if order["total"] <= 0:
+        raise ValueError("Порожнє замовлення")
+    return order
+
+def apply_promo(order, promos):
+    code = order.get("promo")            # що просить замовлення
+    if not code:
+        return order
+    if code not in promos:
+        raise ValueError(f"Невідомий промокод: {code}")
+    percent = promos[code]               # що дозволяє довідник
+    return {**order, "total": order["total"] * (100 - percent) / 100}
+
+def add_fee(order, tariffs, default=100):
+    fee = tariffs.get(order["district"], default)
+    return {**order, "total": order["total"] + fee}
+
+def round_total(order, digits=2):
+    return {**order, "total": round(order["total"], digits)}
+
+# partial прив'язує КОНФІГУРАЦІЮ, а не конкретну знижку
+CHECKOUT = [
+    validate,
+    partial(apply_promo, promos=PROMOS),
+    partial(add_fee, tariffs=TARIFFS),
+    round_total,
+]
+
+def run_pipeline(data, steps):
+    for step in steps:
+        data = step(data)
+    return data
+
+run_pipeline(order, CHECKOUT)["total"]   # 566.0`,
+3:`# Край: мутує аргумент. Викликач отримає сюрприз
+def add_item(cart, item):
+    cart.append(item)
+    return cart
+
+# Ядро: повертає НОВИЙ список, оригінал цілий
+def add_item(cart, item):
+    return cart + [item]
+
+# Ядро тестується одним рядком, без setup
+assert add_fee({"total": 100, "district": "Поділ"}, TARIFFS)["total"] == 160
+
+# Край: однаковий виклик, різний результат
+from datetime import datetime
+def is_night():
+    return datetime.now().hour >= 22
+
+# Правильно: час читаємо на краю і передаємо в ядро
+def night_fee(hour):
+    return 50 if hour >= 22 else 0`,
+4:`# Відсоток — це дані, тому промокоди живуть у довіднику,
+# а не у функціях-близнюках
+PROMOS = {
+__REG__
+}
+
+# Варіант 1: partial прив'язує довідник до функції
+promo_step = partial(apply_promo, promos=PROMOS)
+
+# Варіант 2: фабрика із замиканням робить те саме вручну
+def make_promo_step(promos):
+    def step(order):
+        return apply_promo(order, promos)   # promos із замикання
+    return step                             # без дужок: об'єкт
+
+promo_step = make_promo_step(PROMOS)
+promo_step.__closure__[0].cell_contents     # той самий PROMOS
+
+order = {"total": 540, "district": "Оболонь", "promo": "VIP20"}
+promo_step(order)["total"]                  # 432.0
+
+# Новий промокод = новий рядок даних. Код не змінюється.`,
+5:`def checkout(order, notify):
+    bill = run_pipeline(order, CHECKOUT)
+    notify(bill)              # checkout знає КОЛИ
+    return bill
+
+# Канали знають ЯК. Додати новий = написати нову функцію
+def send_sms(bill):
+    print(f"SMS: до сплати {bill['total']} грн")
+
+def send_telegram(bill):
+    print(f"Telegram: водій виїхав, {bill['total']} грн")
+
+checkout(order, notify=send_sms)        # передаємо об'єкт
+checkout(order, notify=send_telegram)   # checkout не змінився
+
+checkout(order, notify=send_sms())      # пастка!
+# send_sms() виконується одразу і повертає None
+# TypeError: 'NoneType' object is not callable`,
+6:`import functools
+
+def log_call(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        print(f"-> {func.__name__}{args}")
+        result = func(*args, **kwargs)
+        print(f"<- {result}")
+        return result
+    return wrapper
+
+def requires_role(role):              # фабрика декораторів
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            if USER["role"] != role:
+                raise PermissionError(f"Потрібна роль {role}")
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
+
+@log_call                    # зовнішній шар
+@requires_role("manager")    # внутрішній шар
+def change_tariff(district, price):
+    return {**TARIFFS, district: price}
+
+# те саме без @:
+# change_tariff = log_call(requires_role("manager")(change_tariff))`,
+7:`# ===== delivery.py =====
+from functools import partial
+
+# --- КОНФІГУРАЦІЯ (може прийти з файлу чи бази) ---
+PROMOS = {
+__REG__
+}
+TARIFFS = {"Поділ": 60, "Оболонь": 80}
+
+# --- ЧИСТЕ ЯДРО -----------------------------------
+def validate(order):
+    if order["total"] <= 0:
+        raise ValueError("Порожнє замовлення")
+    return order
+
+def apply_promo(order, promos):
+    code = order.get("promo")
+    if not code:
+        return order
+    if code not in promos:
+        raise ValueError(f"Невідомий промокод: {code}")
+    return {**order, "total": order["total"] * (100 - promos[code]) / 100}
+
+def add_fee(order, tariffs, default=100):
+    fee = tariffs.get(order["district"], default)
+    return {**order, "total": order["total"] + fee}
+
+def round_total(order, digits=2):
+    return {**order, "total": round(order["total"], digits)}
+
+CHECKOUT = [                                     # Pipeline
+    validate,
+    partial(apply_promo, promos=PROMOS),         # Dependency Injection
+    partial(add_fee, tariffs=TARIFFS),
+    round_total,
+]
+
+def run_pipeline(data, steps):
+    for step in steps:
+        data = step(data)
+    return data
+
+# --- КРАЇ: побічні ефекти -------------------------
+def send_sms(bill):
+    print(f"SMS: до сплати {bill['total']} грн")
+
+def send_telegram(bill):
+    print(f"Telegram: до сплати {bill['total']} грн")
+
+def checkout(order, notify):                     # Callback
+    bill = run_pipeline(order, CHECKOUT)
+    notify(bill)
+    return bill
+
+if __name__ == "__main__":
+    order = {"total": 540, "district": "__D__", "promo": __P__}
+    checkout(order, notify=__C__)`
+};
+
+/* ---------- state ---------- */
+const N=$$('.slide').length;
+let S={i:0,done:{},open:{},l1:{},l2:[],l3:{},reg:{SUMMER10:10},l5:[],l6:{err:false,ok:false}};
+const hot=window.claude&&window.claude.hot;
+
+function regLines(){return Object.entries(S.reg).map(([k,v])=>`    "${k}": ${v},`).join('\n');}
+function renderCode(n){
+  const box=$(`.codebox[data-code="${n}"]`); if(!box) return;
+  let src=CODE[n].replace('__REG__',regLines());
+  if(n==7){src=src.replace('__D__',$('#l7dist').value).replace('__P__',$('#l7promo').value?`"${$('#l7promo').value}"`:'None').replace('__C__',$('#l7ch').value);}
+  box.querySelector('pre').innerHTML=hl(src);
+  box.classList.toggle('open',!!S.open[n]);
+}
+function openCode(n){S.open[n]=true;renderCode(n);}
+function complete(n){S.done[n]=true;openCode(n);renderRoute();}
+$$('[data-reveal]').forEach(b=>b.onclick=()=>openCode(+b.dataset.reveal));
+function fb(id,type,html){const e=$(id);e.className='fb show '+type;e.innerHTML=html;}
+
+/* ---------- navigation ---------- */
+const route=$('#route');
+$$('.slide').forEach((s,k)=>{const li=document.createElement('li');const b=document.createElement('button');b.className='stop';b.title=`${k}. ${s.dataset.title}`;b.setAttribute('aria-label',`Станція ${k}: ${s.dataset.title}`);b.textContent=k&&k<8?k:'';b.onclick=()=>go(k);li.appendChild(b);route.appendChild(li);});
+function renderRoute(){
+  $$('.stop').forEach((b,k)=>{b.classList.toggle('cur',k===S.i);b.classList.toggle('done',!!S.done[k]&&k!==S.i);});
+  $('#routeFill').style.width=`calc(${S.i/(N-1)} * (100% - 20px))`;
+  const c=Object.keys(S.done).length;$('#starCount').textContent=c;
+  $('#finalScore').innerHTML=`Пройдено станцій: <b>${c} з 7</b>. Цей порядок питань працює для будь-якої системи, не лише для доставки.`;
+}
+function go(k){
+  k=Math.max(0,Math.min(N-1,k));S.i=k;
+  $$('.slide').forEach((s,j)=>s.hidden=j!==k);
+  $('#pos').innerHTML=`<b>${$$('.slide')[k].dataset.title}</b> · ${k+1} / ${N}`;
+  $('#prev').disabled=k===0;$('#next').disabled=k===N-1;
+  $('#main').scrollTop=0;renderRoute();
+  try{history.replaceState(null,'','#station-'+k);}catch(e){}
+}
+$('#prev').onclick=()=>go(S.i-1);$('#next').onclick=()=>go(S.i+1);
+$$('[data-go]').forEach(b=>b.onclick=()=>go(+b.dataset.go));
+document.addEventListener('keydown',e=>{if(/INPUT|SELECT|TEXTAREA/.test(e.target.tagName))return;if(e.key==='ArrowRight')go(S.i+1);if(e.key==='ArrowLeft')go(S.i-1);});
+window.addEventListener('hashchange',()=>{const m=location.hash.match(/station-(\d)/);if(m&&+m[1]!==S.i)go(+m[1]);});
+
+/* ---------- L1 ---------- */
+const L1=[
+ ['order','Замовлення: сума страв, район, промокод','in','Те, що система отримує на вхід.'],
+ ['bill','Сума до сплати','out','Головний результат: новий рахунок.'],
+ ['msg','Повідомлення клієнту «водій виїхав»','out','Теж вихід, але назовні. Це побічний ефект, він піде на край.'],
+ ['promo','Як працює промокод SUMMER10','rule','Правило всередині ящика.'],
+ ['fee','Тариф доставки за районом','rule','Правило всередині ящика: Поділ 60, Оболонь 80, інші 100.'],
+ ['color','Колір кнопки «Оформити» в додатку','none','Це інша система, інтерфейс. Розрахунок про неї не знає.'],
+];
+const ZN={in:'Вхід',rule:'Правило',out:'Вихід',none:'Зайве'};
+function renderL1(check){
+  $('#l1list').innerHTML=L1.map(([id,t,ans,why])=>{
+    const v=S.l1[id];const cls=check&&v?(v===ans?'right':'wrong'):'';
+    return `<div class="sitem ${cls}"><span class="lbl">${t}</span><span class="seg" role="group" aria-label="${t}">${Object.entries(ZN).map(([z,l])=>`<button data-l1="${id}" data-z="${z}" class="${v===z?'on':''}" aria-pressed="${v===z}">${l}</button>`).join('')}</span><span class="why">${v===ans?'Так. ':'Ні: це «'+ZN[ans]+'». '}${why}</span></div>`;}).join('');
+  $$('[data-l1]').forEach(b=>b.onclick=()=>{S.l1[b.dataset.l1]=b.dataset.z;renderL1(false);$('#l1fb').className='fb';});
+}
+$('#l1check').onclick=()=>{
+  const miss=L1.filter(r=>!S.l1[r[0]]).length;
+  if(miss){fb('#l1fb','info',`Розклади ще ${miss} пункт(и).`);return;}
+  renderL1(true);
+  const bad=L1.filter(r=>S.l1[r[0]]!==r[2]).length;
+  if(bad) fb('#l1fb','err',`Помилок: ${bad}. Прочитай підказки під червоними рядками і зміни вибір.`);
+  else{fb('#l1fb','ok','Контракт готовий: <b>замовлення → checkout → рахунок</b>. Тепер ти знаєш межі системи, і можна заглядати всередину.');complete(1);}
+};
+
+/* ---------- L2 ---------- */
+const L2={validate:['Перевірити замовлення',o=>o],apply_promo:['Застосувати промокод',o=>o*0.9],add_fee:['Додати доставку за районом',o=>o+80],round_total:['Округлити до копійок',o=>Math.round(o*100)/100]};
+const L2mix=['round_total','add_fee','validate','apply_promo'];
+const fmt=v=>(Math.round(v*100)/100).toLocaleString('uk-UA');
+function renderL2(){
+  $('#l2parts').innerHTML=L2mix.map(k=>`<button class="part" data-l2="${k}" ${S.l2.includes(k)?'disabled':''}>${L2[k][0]}</button>`).join('');
+  let t=540;
+  $('#l2belt').innerHTML=[0,1,2,3].map(i=>{const k=S.l2[i];if(!k)return `<button class="slot" aria-label="Порожня станція ${i+1}"><span class="k">СТАНЦІЯ ${i+1}</span><span class="ds meter">порожньо</span></button>`;t=L2[k][1](t);return `<button class="slot filled" data-un="${i}" title="Натисни, щоб прибрати"><span class="k">СТАНЦІЯ ${i+1}</span><span class="fn">${k}</span><span class="val">${fmt(t)} грн</span></button>`;}).join('');
+  $$('[data-l2]').forEach(b=>b.onclick=()=>{if(S.l2.length<4){S.l2.push(b.dataset.l2);renderL2();$('#l2fb').className='fb';}});
+  $$('[data-un]').forEach(b=>b.onclick=()=>{S.l2.splice(+b.dataset.un,1);renderL2();});
+}
+$('#l2reset').onclick=()=>{S.l2=[];renderL2();$('#l2fb').className='fb';};
+$('#l2check').onclick=()=>{
+  const p=S.l2;if(p.length<4)return fb('#l2fb','info','Заповни всі чотири станції.');
+  const total=p.reduce((t,k)=>L2[k][1](t),540);
+  if(p[0]!=='validate')return fb('#l2fb','err','Перевірка має стояти першою: некоректне замовлення не повинне доїхати до розрахунку.');
+  if(p.indexOf('apply_promo')>p.indexOf('add_fee'))return fb('#l2fb','err',`Вийшло <b>${fmt(total)} грн</b> замість 566: знижка зачепила доставку. За правилом знижка діє лише на страви, тож промокод іде до доставки.`);
+  if(p[3]!=='round_total')return fb('#l2fb','err','Округлення ставимо останнім: інакше наступні кроки знову можуть дати «довгі» копійки.');
+  fb('#l2fb','ok','Конвеєр зібрано: <b>566 грн</b>. Зверни увагу: кроки знають лише свою роботу, а порядок записаний окремо, у списку.');complete(2);
+};
+
+/* ---------- L3 ---------- */
+const L3=[
+ ['a','apply_promo(order)','core','Отримує замовлення, повертає новий dict.'],
+ ['b','add_fee(order, tariffs)','core','Той самий order і той самий довідник завжди дають ту саму суму.'],
+ ['c','send_sms(bill)','edge','Надсилає дані в мережу: це взаємодія зі світом.'],
+ ['d','read_orders("orders.csv")','edge','Читає файл: результат залежить від того, що лежить на диску.'],
+ ['e','is_night() → datetime.now()','edge','Залежить від годинника: однаковий виклик, різний результат.'],
+ ['f','add_item(cart, x) з cart.append(x)','edge','Мутує чужий список: викликач побачить зміну «з нізвідки».'],
+ ['g','partial(apply_promo, promos=PROMOS)','core','Повертає нову функцію з прив\'язаним довідником і нічого не змінює зовні.'],
+ ['h','round_total(order)','core','Чисте обчислення над вхідними даними.'],
+];
+function renderL3(check){
+  $('#l3cards').innerHTML=L3.map(([id,t,ans,why])=>{const v=S.l3[id];const cls=check&&v?(v===ans?'right':'wrong'):'';
+    return `<div class="card ${cls}"><code>${esc(t)}</code><div class="row"><button class="btn small b-core ${v==='core'?'on':''}" data-l3="${id}" data-z="core" aria-pressed="${v==='core'}">Ядро</button><button class="btn small b-edge ${v==='edge'?'on':''}" data-l3="${id}" data-z="edge" aria-pressed="${v==='edge'}">Край</button></div><div class="why">${v===ans?'Так. ':'Ні. '}${why}</div></div>`;}).join('');
+  $$('[data-l3]').forEach(b=>b.onclick=()=>{S.l3[b.dataset.l3]=b.dataset.z;renderL3(false);$('#l3fb').className='fb';});
+}
+$('#l3check').onclick=()=>{
+  const miss=L3.filter(r=>!S.l3[r[0]]).length;if(miss)return fb('#l3fb','info',`Залишилось розкласти: ${miss}.`);
+  renderL3(true);const bad=L3.filter(r=>S.l3[r[0]]!==r[2]).length;
+  if(bad)fb('#l3fb','err',`Помилок: ${bad}. Питай себе: чи змінює функція щось зовні? Чи може той самий виклик дати інший результат?`);
+  else{fb('#l3fb','ok','Межу проведено. Усе, що в конвеєрі, лежить у ядрі. Файл, мережа і годинник лишаються на краях, перед конвеєром або після нього.');complete(3);}
+};
+
+/* ---------- L4 ---------- */
+function renderL4(){
+  $('#l4reg').innerHTML=Object.entries(S.reg).map(([k,v])=>`<tr><td><code>"${k}"</code></td><td class="num">${v} %</td><td class="num">${fmt(540*(100-v)/100)} грн</td></tr>`).join('');
+  const sel=$('#l7promo'),cur=sel.value;
+  sel.innerHTML=Object.keys(S.reg).map(k=>`<option value="${k}">${k}</option>`).join('')+'<option value="">без промокоду</option>';
+  if([...sel.options].some(o=>o.value===cur))sel.value=cur;
+  renderCode(4);renderCode(7);
+}
+$('#l4pct').oninput=e=>$('#l4pctv').textContent=e.target.value;
+$('#l4stamp').onclick=()=>{
+  const name=$('#l4name').value.trim().toUpperCase(),pct=+$('#l4pct').value;
+  if(!/^[A-Z0-9]{3,12}$/.test(name))return fb('#l4fb','err','Назва промокоду: 3–12 латинських літер або цифр, наприклад WELCOME5.');
+  const p=$('#press');p.classList.remove('stamp');void p.offsetWidth;if(!reduce)p.classList.add('stamp');
+  const existed=name in S.reg;S.reg[name]=pct;renderL4();
+  const ok=S.reg.VIP20===20&&S.reg.WELCOME5===5;
+  if(ok&&!S.done[4]){fb('#l4fb','ok','Обидва коди в довіднику, а код функцій не змінився жодного разу. Новий промокод — це новий рядок даних у PROMOS, без нової функції і без elif.');complete(4);}
+  else if(!ok){const need=S.reg.VIP20!==20?['VIP20',20]:['WELCOME5',5];
+    fb('#l4fb','info',`${existed?'Оновлено':'Додано'}: <code>"${name}": ${pct}</code>. Наступний: ${need[0]} на ${need[1]} %.`);
+    $('#l4name').value=need[0];$('#l4pct').value=need[1];$('#l4pctv').textContent=need[1];}
+  else fb('#l4fb','ok',`Додано <code>"${name}": ${pct}</code>. Він уже доступний на станції 7.`);
+};
+
+/* ---------- L5 ---------- */
+const PLUGS=[['send_sms','SMS','Водій виїхав. До сплати 566 грн.'],['send_telegram','Telegram','Замовлення №1042 в дорозі. До сплати 566 грн.'],['send_email','Email','Рахунок на 566 грн надіслано на пошту.'],['send_sms()','trap','']];
+function renderL5(){
+  $('#plugs').innerHTML=PLUGS.map(([f])=>`<button class="plug" data-pl="${f}">${f}</button>`).join('');
+  $$('[data-pl]').forEach(b=>b.onclick=()=>plug(b.dataset.pl));
+}
+function plug(f){
+  $$('[data-pl]').forEach(b=>b.classList.toggle('on',b.dataset.pl===f));
+  $('#callline').innerHTML=hl(`checkout(order, notify=${f})`);
+  const sock=$('#socket'),ph=$('#phone');
+  const p=PLUGS.find(x=>x[0]===f);
+  const m=document.createElement('div');
+  if(p[1]==='trap'){sock.classList.remove('plugged');m.className='msg err';m.textContent="TypeError: 'NoneType' object is not callable";ph.appendChild(m);
+    fb('#l5fb','err','Дужки викликали <code>send_sms()</code> одразу, ще до checkout. Вона повернула <code>None</code>, і в гачок потрапив None замість функції. Передавай ім\'я без дужок.');}
+  else{sock.classList.add('plugged');m.className='msg';m.innerHTML=`<b>${p[1]}</b>${p[2]}`;ph.appendChild(m);
+    if(!S.l5.includes(f))S.l5.push(f);
+    if(S.l5.length>=2&&!S.done[5]){fb('#l5fb','ok',`Два канали, а checkout не змінився жодного разу. Новий канал означає нову функцію, а не новий if.`);complete(5);}
+    else if(!S.done[5])fb('#l5fb','info','Повідомлення доставлено. Спробуй інший канал.');}
+  while(ph.querySelectorAll('.msg').length>4)ph.querySelector('.msg').remove();
+}
+
+/* ---------- L6 ---------- */
+function syncRings(){$('#ringLog').classList.toggle('off',!$('#t-log').checked);$('#ringRole').classList.toggle('off',!$('#t-role').checked);}
+$('#t-log').onchange=$('#t-role').onchange=syncRings;
+$('#l6call').onclick=()=>{
+  const log=$('#t-log').checked,role=$('#t-role').checked,who=$('#l6role').value,L=[];
+  if(log)L.push(['','log_call     → виклик change_tariff("Поділ", 70)']);
+  let pass=true;
+  if(role){if(who!=='manager'){pass=false;L.push(['bad',`requires_role ✗ роль "${who}" ≠ "manager" → PermissionError`]);if(log)L.push(['','log_call     ← виняток летить назовні, тариф не змінено']);}
+    else L.push(['ok','requires_role ✓ роль manager, пропускаю всередину']);}
+  if(pass){L.push(['ok','change_tariff  тариф «Поділ» = 70 грн']);if(log)L.push(['','log_call     ← повернуто {"Поділ": 70, ...}']);}
+  const tr=$('#l6trace');tr.innerHTML=L.map(([c,t],k)=>`<div class="${c}" style="animation-delay:${reduce?0:k*.15}s">${esc(t)}</div>`).join('');
+  if(log&&role&&!pass)S.l6.err=true;if(log&&role&&pass)S.l6.ok=true;
+  if(!role&&who!=='manager')fb('#l6fb','err','Без шару <code>@requires_role</code> гість щойно змінив тариф. Сама функція change_tariff не знає про ролі, і це правильно: перевірку додає обгортка.');
+  else if(S.l6.err&&S.l6.ok&&!S.done[6]){fb('#l6fb','ok','Обидва сценарії пройдено. change_tariff містить лише бізнес-логіку, а журнал і доступ додані шарами ззовні. Ті самі два рядки з @ можна поставити над будь-якою іншою функцією.');complete(6);}
+  else if(!S.done[6])fb('#l6fb','info',S.l6.err?'Помилку доступу побачено. Тепер виклич як manager з обома шарами.':'Успіх побачено. Тепер виклич як guest або courier з обома шарами.');
+};
+
+/* ---------- L7 ---------- */
+const FEE={'Поділ':60,'Оболонь':80};
+function stationsL7(){
+  const d=$('#l7dist').value,pc=$('#l7promo').value,ch=$('#l7ch').value,pct=pc?S.reg[pc]:0,fee=FEE[d]??100;
+  let t=540;const r=[];
+  r.push(['edge','read_order()','вхід: замовлення з додатку','540 грн']);
+  r.push(['core','validate','сума більша за нуль','540 грн']);
+  t=t*(100-pct)/100;r.push(['core','apply_promo',pc?`${pc}: −${pct} %`:'без промокоду',fmt(t)+' грн']);
+  t+=fee;r.push(['core','add_fee',`${d}: +${fee} грн`,fmt(t)+' грн']);
+  t=Math.round(t*100)/100;r.push(['core','round_total','до копійок',fmt(t)+' грн']);
+  r.push(['edge',ch,'вихід: повідомлення клієнту','надіслано']);
+  return [r,t];
+}
+function renderL7(){const [r]=stationsL7();$('#l7line').innerHTML=r.map(([k,n,ds,v])=>`<div class="st-row ${k==='edge'?'edge':''}"><span class="dot"></span><div><div class="nm">${esc(n)}</div><div class="ds">${esc(ds)}</div></div><span class="v">${v}</span></div>`).join('');renderCode(7);}
+['#l7dist','#l7promo','#l7ch'].forEach(s=>$(s).onchange=()=>{renderL7();$('#l7fb').className='fb';});
+let running=false;
+$('#l7run').onclick=()=>{
+  if(running)return;renderL7();running=true;const rows=$$('#l7line .st-row'),[,t]=stationsL7();
+  rows.forEach((row,k)=>setTimeout(()=>{row.classList.add('lit');if(k===rows.length-1){running=false;
+    fb('#l7fb','ok',`Рахунок: <b>${fmt(t)} грн</b>. Шість станцій, з них дві на краях. Зміни район, промокод чи канал і запусти ще раз: програма та сама, змінюються лише дані й підключені функції.`);complete(7);}},reduce?0:k*420));
+};
+
+/* ---------- Потік даних: покрокове виконання для кожної станції ---------- */
+const FLOWS={
+1:{title:'виклик чорного ящика',file:'main.py',
+ nodes:[{k:'io',name:'order',sub:'вхід'},{k:'black',name:'checkout',sub:'чорний ящик'},{k:'io',name:'bill',sub:'вихід'},{k:'edge',name:'print',sub:'край: консоль'}],
+ code:['order = {"total": 540, "district": "Оболонь", "promo": "SUMMER10"}','bill = checkout(order)','print(f"До сплати: {bill[\'total\']} грн")'],
+ steps:[
+  {on:0,line:0,val:{0:'540 грн'},vars:['order = {"total": 540, ...}'],say:'Створюємо вхідні дані. Це звичайний словник: система ще нічого не робила.'},
+  {on:1,line:1,val:{1:'?'},vars:['checkout(order)'],say:'Передаємо замовлення в чорний ящик. Що відбувається всередині, на цьому рівні неважливо: важливий лише контракт «що дали, що отримали».'},
+  {on:2,line:1,val:{2:'566 грн'},vars:['bill = {"total": 566.0, ...}','order["total"] = 540   # не змінився'],say:'Ящик повертає новий словник-рахунок. Вхідне замовлення лишилося таким, як було.'},
+  {on:3,line:2,val:{3:['«До сплати: 566 грн»','good']},vars:['print(...)   # вивід назовні'],say:'Вивід у консоль впливає на зовнішній світ. Тому він стоїть поза ящиком, на краю системи.'}]},
+2:{title:'як виконується run_pipeline',file:'runner',
+ phases:['<b>Дані.</b> <code>order</code> із сумою, районом і промокодом. Нові для кожного замовлення, приходять під час виконання.','<b>Конфігурація.</b> <code>PROMOS</code> і <code>TARIFFS</code> — правила знижок і тарифів. Змінюються без зміни коду.','<b>partial.</b> Прив\'язує конфігурацію до функції заздалегідь: <code>partial(apply_promo, promos=PROMOS)</code> — «функція, що чекає order і завжди користується цим довідником».','<b>Pipeline.</b> Runner передає замовлення по черзі через станції, даючи кожній лише одне — order.'],
+ nodes:[{k:'io',name:'order',sub:'дані'},{k:'core',name:'validate',sub:'перевірка',knob:'без конфігурації',none:1},{k:'core',name:'apply_promo',sub:'знижка',knob:'promos = PROMOS'},{k:'core',name:'add_fee',sub:'доставка',knob:'tariffs = TARIFFS'},{k:'core',name:'round_total',sub:'округлення',knob:'digits = 2',none:1},{k:'io',name:'bill',sub:'вихід'}],
+ code:['data = order','for step in CHECKOUT:','    data = step(data)','return data'],
+ steps:[
+  {on:0,line:0,val:{0:'540 грн'},vars:['data = {"total": 540, "district": "Оболонь", "promo": "SUMMER10"}'],say:'Замовлення стає змінною data. Лінія вже зібрана: довідники прив\'язані до станцій, але жодного конкретного відсотка ще не вибрано.'},
+  {on:1,line:[1,2],val:{1:'540 грн'},vars:['step = validate','step(data)  →  validate(data)','data["total"]: 540 → 540'],say:'Runner викликає step(data). Тут step = validate: конфігурація не потрібна, сума більша за нуль, замовлення їде далі.'},
+  {on:2,line:[1,2],val:{2:'486 грн'},vars:['step = partial(apply_promo, promos=PROMOS)','data["promo"] = "SUMMER10"  →  PROMOS["SUMMER10"] = 10','data["total"]: 540 → 486'],say:'Runner пише просто step(data). Станція бере код промокоду з самого замовлення, а відсоток шукає в прив\'язаному довіднику. Інше замовлення з VIP20 дало б −20 % без жодної зміни коду.'},
+  {on:3,line:[1,2],val:{3:'566 грн'},vars:['step = partial(add_fee, tariffs=TARIFFS)','data["district"] = "Оболонь"  →  TARIFFS["Оболонь"] = 80','data["total"]: 486 → 566'],say:'Так само для доставки: район бере з даних, ціну — з конфігурації тарифів.'},
+  {on:4,line:[1,2],val:{4:'566 грн'},vars:['step = round_total','step(data)  →  round_total(data, digits=2)','data["total"]: 566 → 566.0'],say:'digits=2 — значення за замовчуванням, прив\'язувати нічого не треба.'},
+  {on:5,line:3,val:{5:['566 грн','good']},vars:['return data   # {"total": 566.0, ...}'],say:'Цикл завершено. Runner не знав ні про промокоди, ні про тарифи: дані прийшли із замовлення, правила — з конфігурації.'}]},
+3:{title:'append проти +',file:'cart.py',
+ nodes:[{k:'io',name:'cart',sub:'вхідний список'},{k:'edge',name:'add_item A',sub:'cart.append'},{k:'core',name:'add_item B',sub:'cart + [item]'},{k:'io',name:'print(cart)',sub:'що з оригіналом?'}],
+ code:['cart = [100, 200]','','# версія A — край','def add_item(cart, item):','    cart.append(item)','    return cart','','# версія B — ядро','def add_item(cart, item):','    return cart + [item]','','result = add_item(cart, 50)','print(cart)'],
+ steps:[
+  {on:0,line:0,val:{0:'[100, 200] · id 01'},vars:['cart = [100, 200]   # об\'єкт id 01'],say:'Є кошик. Запам\'ятай його адресу в пам\'яті: id 01.'},
+  {on:[0,1],line:[11,4],val:{0:['[100, 200, 50] · id 01','bad'],1:['result → id 01','bad']},vars:['cart.append(50)   # змінює об\'єкт id 01','result is cart   # True'],say:'Версія A дописує 50 прямо в той самий список. cart і result — два імені одного об\'єкта.'},
+  {on:3,line:12,val:{3:['[100, 200, 50]','bad']},vars:['print(cart)   # [100, 200, 50]'],say:'Оригінальний кошик змінився, хоча ми його явно не чіпали. Це побічний ефект: версія A належить до краю.'},
+  {on:2,line:[11,9],val:{0:'[100, 200] · id 01',1:'',3:'',2:['новий список · id 02','good']},vars:['cart + [50]   # створює об\'єкт id 02','result is cart   # False'],say:'Почнімо знову з версією B. Оператор + не чіпає вхід, а будує новий список з новою адресою.'},
+  {on:3,line:12,val:{3:['[100, 200]','good']},vars:['print(cart)   # [100, 200]'],say:'Оригінал цілий. Той самий вхід завжди дає той самий вихід, і зовні нічого не змінюється. Це чисте ядро.'}]},
+4:{title:'довідник у замиканні',file:'promos.py',
+ nodes:[{k:'io',name:'PROMOS',sub:'конфігурація'},{k:'fact',name:'make_promo_step',sub:'фабрика'},{k:'core',name:'step',sub:'нова функція',knob:'замикання: promos'},{k:'core',name:'promo_step(order)',sub:'виклик',knob:'order["promo"]'},{k:'io',name:'результат',sub:'вихід'}],
+ code:['PROMOS = {"SUMMER10": 10, "VIP20": 20, "WELCOME5": 5}','def make_promo_step(promos):','    def step(order):','        return apply_promo(order, promos)','    return step','promo_step = make_promo_step(PROMOS)','promo_step(order)        # order["promo"] = "VIP20"'],
+ steps:[
+  {on:0,line:0,val:{0:'3 промокоди'},vars:['PROMOS = {...}   # конфігурація'],say:'Довідник промокодів — конфігурація. Його можна читати з файлу чи бази: код від цього не зміниться.'},
+  {on:1,line:[5,1],val:{1:'працює'},vars:['make_promo_step(PROMOS)','promos = PROMOS'],say:'Фабрика отримує довідник і створює всередині функцію step. Знижку вона ще не рахує.'},
+  {on:2,line:4,val:{1:'завершилась',2:['promos = PROMOS','good']},vars:['return step   # без дужок','promo_step.__closure__  →  PROMOS'],say:'Фабрика повертає step і завершується, а довідник лишається в замиканні. partial(apply_promo, promos=PROMOS) дає такий самий результат одним рядком.'},
+  {on:3,line:[6,3],val:{3:'promo = "VIP20"'},vars:['order = {"total": 540, "promo": "VIP20", ...}','apply_promo(order, promos)'],say:'Під час виконання функція отримує лише order. Код промокоду бере із замовлення, відсоток — з довідника в пам\'яті.'},
+  {on:4,line:3,val:{4:['432 грн','good']},vars:['promos["VIP20"]  →  20','540 * (100 - 20) / 100  →  432.0'],say:'Конфігурацію прив\'язали один раз, дані щоразу нові: наступне замовлення може мати SUMMER10 або не мати промокоду взагалі.'}]},
+5:{title:'гачок notify',file:'checkout.py',
+ nodes:[{k:'io',name:'order',sub:'вхід'},{k:'core',name:'checkout',sub:'знає КОЛИ'},{k:'io',name:'bill',sub:'рахунок'},{k:'hook',name:'notify',sub:'гачок'},{k:'edge',name:'send_telegram',sub:'знає ЯК'},{k:'io',name:'клієнт',sub:'телефон'}],
+ code:['def checkout(order, notify):','    bill = run_pipeline(order, CHECKOUT)','    notify(bill)','    return bill','','checkout(order, notify=send_telegram)'],
+ steps:[
+  {on:3,line:5,val:{3:'send_telegram'},vars:['notify = send_telegram   # об\'єкт, не виклик'],say:'Під час виклику в гачок кладемо саму функцію send_telegram, без дужок. Вона ще не виконується.'},
+  {on:[0,1],line:[0,1],val:{0:'540 грн',1:'конвеєр'},vars:['bill = run_pipeline(order, CHECKOUT)'],say:'checkout робить свою роботу: проганяє замовлення конвеєром зі станції 2.'},
+  {on:2,line:1,val:{2:'566 грн'},vars:['bill["total"] = 566.0'],say:'Рахунок готовий. Настав момент «коли».'},
+  {on:[3,4],line:2,val:{4:'виконується'},vars:['notify(bill)  →  send_telegram(bill)'],say:'checkout викликає notify(bill). Він не знає, яка функція в гачку, і просто викликає її.'},
+  {on:5,line:2,val:{5:['«566 грн, водій виїхав»','good']},vars:['print(...)   # побічний ефект'],say:'Повідомлення пішло клієнту. Заміни send_telegram на send_sms, і checkout не зміниться ні на рядок.'},
+  {on:2,line:3,vars:['return bill'],say:'checkout повертає рахунок тому, хто його викликав.'}]},
+6:{title:'виклик через шари',file:'tariffs.py',
+ nodes:[{k:'io',name:'виклик',sub:'("Поділ", 70)'},{k:'wrap',name:'@log_call',sub:'шар 1, зовнішній'},{k:'wrap',name:'@requires_role',sub:'шар 2',knob:'role = "manager"'},{k:'core',name:'change_tariff',sub:'оригінал'},{k:'io',name:'результат',sub:'вихід'}],
+ code:['@log_call','@requires_role("manager")','def change_tariff(district, price):','    return {**TARIFFS, district: price}','','# Python робить із цього:','# change_tariff = log_call(requires_role("manager")(change_tariff))','','USER = {"role": "manager"}','change_tariff("Поділ", 70)'],
+ steps:[
+  {on:0,line:[9,6],val:{0:'("Поділ", 70)'},vars:['change_tariff  →  wrapper з log_call'],say:'Ім\'я change_tariff тепер вказує не на оригінал, а на зовнішню обгортку. Виклик спершу потрапляє в неї.'},
+  {on:1,line:0,val:{1:'-> change_tariff'},vars:['print("-> change_tariff(\'Поділ\', 70)")'],say:'Шар 1 записує виклик у журнал і передає аргументи далі без змін.'},
+  {on:2,line:[1,8],val:{2:['manager ✓','good']},vars:['USER["role"] == "manager"   # True'],say:'Шар 2 перевіряє роль і пропускає менеджера. Гостя він зупинив би тут через PermissionError, і оригінал навіть не почав би працювати.'},
+  {on:3,line:[2,3],val:{3:'{"Поділ": 70}'},vars:['func("Поділ", 70)   # оригінал'],say:'Оригінальна функція виконує лише бізнес-логіку. Вона не знає ні про журнал, ні про ролі.'},
+  {on:1,line:0,val:{1:'<- {"Поділ": 70}'},vars:['print("<- {\'Поділ\': 70}")','return result'],say:'Результат повертається тим самим шляхом назовні. Шар 1 записує відповідь у журнал.'},
+  {on:4,line:9,val:{4:['{"Поділ": 70}','good']},vars:['результат виклику'],say:'Викликач отримав результат. Ці два рядки з @ можна поставити над будь-якою іншою функцією.'}]},
+7:{title:'уся програма',file:'delivery.py',
+ nodes:[{k:'edge',name:'read_order',sub:'край: вхід'},{k:'core',name:'validate',sub:'перевірка'},{k:'core',name:'apply_promo',sub:'знижка',knob:'promos = PROMOS'},{k:'core',name:'add_fee',sub:'доставка',knob:'tariffs = TARIFFS'},{k:'core',name:'round_total',sub:'округлення'},{k:'edge',name:'send_sms',sub:'край: вихід'}],
+ code:['order = read_order()            # край: вхід','for step in CHECKOUT:           # чисте ядро','    order = step(order)','send_sms(order)                 # край: вихід'],
+ steps:[
+  {on:0,line:0,val:{0:'540 грн'},vars:['order = {"total": 540, "district": "Оболонь", "promo": "SUMMER10"}'],say:'Край на вході: дані приходять ззовні (додаток, файл, база). Тут може бути що завгодно, тому далі стоїть перевірка.'},
+  {on:1,line:[1,2],val:{1:'540 грн'},vars:['step = validate'],say:'Ядро починається з перевірки. Від цього моменту всі кроки чисті.'},
+  {on:2,line:[1,2],val:{2:'486 грн'},vars:['order["promo"] = "SUMMER10"  →  PROMOS["SUMMER10"] = 10','540 → 486'],say:'Промокод — із даних замовлення, відсоток — з конфігурації PROMOS, яку прив\'язав partial.'},
+  {on:3,line:[1,2],val:{3:'566 грн'},vars:['order["district"] = "Оболонь"  →  TARIFFS["Оболонь"] = 80','486 → 566'],say:'Тариф так само: район із даних, ціна з конфігурації TARIFFS.'},
+  {on:4,line:[1,2],val:{4:'566 грн'},vars:['566 → 566.0'],say:'Останній крок ядра: округлення.'},
+  {on:5,line:3,val:{5:['SMS надіслано','good']},vars:['send_sms(order)   # передано як callback'],say:'Край на виході. Якщо PROMOS чи TARIFFS почнуть приходити з бази даних, змінюється лише конфігурація: конвеєр і функції лишаються ті самі. Це і є впровадження залежностей (Dependency Injection).'}]},
+};
+function makeFlow(el,F){
+  let i=0,timer=null;const last=F.steps.length-1;
+  el.innerHTML=`<div class="panel-h"><span class="tag">Потік даних · ${F.title}</span><div class="row"><button class="btn small" data-a="reset">Спочатку</button><button class="btn small" data-a="step">Крок →</button><button class="btn small primary" data-a="play">Запустити</button></div></div>`
+   +(F.phases?`<div class="phases">${F.phases.map((p,k)=>`<div class="phase"><span class="ph-n">${k+1}</span><p>${p}</p></div>`).join('')}</div>`:'')
+   +`<div class="flowline" style="--n:${F.nodes.length}"></div><div class="flowfoot"><div class="codebox open mini"><div class="bar"><span>${F.file}</span><span class="fl-it"></span></div><pre></pre></div><div class="vars"><div class="tag">Стан змінних</div><div class="fvars"></div><p class="fl-say" aria-live="polite"></p></div></div>`;
+  const q=s=>el.querySelector(s);
+  function render(){
+    const vals={};for(let k=0;k<=i;k++)Object.assign(vals,F.steps[k].val||{});
+    const st=F.steps[i],on=[].concat(st.on),lines=[].concat(st.line??[]);
+    q('.flowline').innerHTML=F.nodes.map((n,j)=>{const v=vals[j];const [txt,tone]=Array.isArray(v)?v:[v||'',''];
+      return `<div class="fnode k-${n.k} ${on.includes(j)?'on':''} ${txt?'passed':''}"><div class="knob ${n.knob?'':'io'} ${n.none?'none':''}">${esc(n.knob||'·')}</div><div class="fbox"><code>${esc(n.name)}</code><span>${esc(n.sub)}</span></div><div class="parcel ${tone||''}">${esc(txt)}</div></div>`;}).join('');
+    q('pre').innerHTML=F.code.map((l,j)=>`<span class="ln ${lines.includes(j)?'hl':''}">${hl(l)||' '}</span>`).join('');
+    q('.fl-it').textContent=`крок ${i+1} з ${last+1}`;
+    q('.fvars').innerHTML=(st.vars||[]).map(v=>`<div>${hl(v)}</div>`).join('');
+    q('.fl-say').textContent=st.say;
+    q('[data-a=step]').disabled=i===last;
+  }
+  function stop(){clearInterval(timer);timer=null;q('[data-a=play]').textContent='Запустити';}
+  q('[data-a=step]').onclick=()=>{stop();if(i<last){i++;render();}};
+  q('[data-a=reset]').onclick=()=>{stop();i=0;render();};
+  q('[data-a=play]').onclick=()=>{if(timer)return stop();if(i===last)i=0;render();q('[data-a=play]').textContent='Пауза';timer=setInterval(()=>{i++;render();if(i>=last)stop();},reduce?900:1900);};
+  render();
+}
+Object.keys(FLOWS).forEach(n=>{
+  const stage=$(`.codebox[data-code="${n}"]`).closest('.stage');
+  const el=document.createElement('div');el.className='panel flow';stage.after(el);makeFlow(el,FLOWS[n]);
+});
+
+$('#restart').onclick=()=>{S={i:0,done:{},open:{},l1:{},l2:[],l3:{},reg:{SUMMER10:10},l5:[],l6:{err:false,ok:false}};boot();go(0);$$('.fb').forEach(e=>e.className='fb');$('#phone').innerHTML='<span class="meter">Телефон клієнта</span>';$('#l6trace').innerHTML='';$('#socket').classList.remove('plugged');$('#callline').textContent='checkout(order, notify=?)';};
+
+function boot(){
+  renderL1(false);renderL2();renderL3(false);renderL4();renderL5();syncRings();renderL7();
+  for(let n=1;n<=7;n++)renderCode(n);
+  const m=location.hash.match(/station-(\d)/);go(m?+m[1]:S.i);
+}
+if(hot&&hot.snapshot){try{hot.snapshot(()=>S);}catch(e){}}
+function start(data){if(data&&data.done)S=Object.assign(S,data);boot();}
+hot&&hot.ready?hot.ready(start):start(hot&&hot.data||{});
+})();
+</script>
+
+</body></html>
