@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Урок 20 — Карта об'єктів, класів і методів Python</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --card: #ffffff; --ink: #1f2328; --muted: #6a737d; --line: #d0d7de;
+    --mut: #d9480f; --new: #2b8a3e; --info: #1c6ed6; --create: #6741d9; --none: #868e96;
+    --meta: #6741d9; --hl: #ffd43b;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--ink); }
+  header { padding: 18px 24px 8px; }
+  h1 { margin: 0 0 4px; font-size: 22px; }
+  header p { margin: 0; color: var(--muted); }
+  code, .mono { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 0.92em; }
+  .wrap { padding: 0 24px 32px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--muted); margin: 8px 0 0; align-items: center; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .sw { display: inline-block; width: 28px; height: 0; border-top: 2px solid #495057; }
+  .sw.dash { border-top-style: dashed; }
+  .sw.meta { border-top-color: var(--meta); }
+  .tag { display: inline-block; padding: 0 7px; border-radius: 10px; font-size: 12px; color: #fff; font-weight: 600; white-space: nowrap; }
+  .tag.mut { background: var(--mut); } .tag.new { background: var(--new); } .tag.info { background: var(--info); }
+  .tag.create { background: var(--create); } .tag.none { background: var(--none); }
+
+  #mapCard { margin-top: 10px; }
+  svg { width: 100%; height: auto; display: block; user-select: none; }
+  .node rect { stroke-width: 1.5; cursor: pointer; transition: fill .2s, stroke .2s; }
+  .node text { pointer-events: none; font-size: 14px; }
+  .node.cls rect { fill: #eef4ff; stroke: #4c6ef5; }
+  .node.user rect { fill: #fff4e6; stroke: #f08c00; }
+  .node.root rect { fill: #e6fcf5; stroke: #0ca678; }
+  .node.metan rect { fill: #f3f0ff; stroke: var(--meta); }
+  .node.inst rect { fill: #fff; stroke: #868e96; }
+  .node.sel rect { stroke: #000; stroke-width: 3; }
+  .node.hl rect { fill: var(--hl); }
+  .node.found rect { fill: #b2f2bb; stroke: var(--new); stroke-width: 3; }
+  .node.miss rect { fill: #ffe3e3; }
+  .edge { fill: none; stroke: #495057; stroke-width: 1.4; }
+  .edge.inh { stroke-dasharray: 6 4; }
+  .edge.meta { stroke: var(--meta); stroke-width: 1.1; opacity: .55; }
+  .edge.hl { stroke: #e67700; stroke-width: 3; opacity: 1; }
+
+  .tabs { display: flex; gap: 6px; margin: 16px 0 0; }
+  .tabs button { border: 1px solid var(--line); border-bottom: none; background: #eceef1; padding: 8px 14px; border-radius: 8px 8px 0 0; cursor: pointer; font: inherit; }
+  .tabs button.on { background: var(--card); font-weight: 600; }
+  .tabpane { display: none; border-top-left-radius: 0; }
+  .tabpane.on { display: block; }
+
+  h2 { font-size: 19px; margin: 0 0 6px; }
+  h3 { font-size: 15px; margin: 16px 0 6px; }
+  .muted { color: var(--muted); }
+  .mro { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 6px 0; }
+  .mro .step { padding: 2px 8px; border-radius: 6px; background: #eef4ff; border: 1px solid #bac8ff; }
+  .mro .step.found { background: #b2f2bb; border-color: var(--new); font-weight: 700; }
+  .mro .step.miss { background: #f1f3f5; color: var(--muted); text-decoration: line-through; }
+  .mro .arrow { color: var(--muted); }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid #eaecef; vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 13px; }
+  tr.overr td:first-child::after { content: " ⟲"; color: var(--mut); }
+  .from { font-size: 12px; color: var(--muted); }
+  button.run { border: 1px solid var(--line); background: #fff; border-radius: 6px; padding: 2px 9px; cursor: pointer; font: inherit; font-size: 13px; }
+  button.run:hover { background: #f1f3f5; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  input[type=text], select { font: inherit; padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; }
+  .btn { font: inherit; padding: 5px 12px; border-radius: 6px; border: 1px solid #4c6ef5; background: #4c6ef5; color: #fff; cursor: pointer; }
+  .btn.ghost { background: #fff; color: #4c6ef5; }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .console { background: #1e1e1e; color: #e6e6e6; border-radius: 8px; padding: 10px 12px; font-family: ui-monospace, Consolas, monospace; font-size: 13.5px; white-space: pre-wrap; margin-top: 8px; min-height: 40px; }
+  .console .c { color: #8b949e; } .console .ok { color: #7ee787; } .console .err { color: #ff7b72; } .console .k { color: #79c0ff; } .console .w { color: #ffa657; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
+  .steps { display: flex; gap: 6px; margin: 8px 0; flex-wrap: wrap; }
+  .steps .dot { padding: 2px 10px; border-radius: 12px; background: #f1f3f5; color: var(--muted); font-size: 13px; }
+  .steps .dot.on { background: #4c6ef5; color: #fff; }
+  .steps .dot.done { background: #dbe4ff; color: #364fc7; }
+  .stepbox { border-left: 4px solid #4c6ef5; padding: 8px 12px; background: #f8f9ff; border-radius: 0 8px 8px 0; margin: 8px 0; }
+  .objstate { display: inline-block; border: 2px solid #495057; border-radius: 8px; padding: 6px 10px; background: #fff; font-family: ui-monospace, Consolas, monospace; }
+  .objstate.empty { border-style: dashed; color: var(--muted); }
+  .chip { display: inline-block; margin: 2px 4px 2px 0; padding: 1px 7px; border-radius: 6px; background: #f1f3f5; font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
+  .chip.own { background: #d3f9d8; }
+  .ocard { border: 2px solid #6741d9; border-radius: 12px; margin: 16px 0; overflow: hidden; background: #fff; box-shadow: 0 2px 8px rgba(103,65,217,.08); }
+  .ocard-head { background: #6741d9; color: #fff; padding: 9px 14px; font-weight: 700; font-size: 16px; }
+  .ocard-head code { background: rgba(255,255,255,.18); color: #fff; padding: 0 5px; border-radius: 4px; }
+  .ocard-head span { float: right; font-weight: 400; font-size: 13px; opacity: .85; margin-top: 2px; }
+  .ocard-body { padding: 12px 14px; }
+  .ocard-facts th { width: 190px; color: #495057; font-size: 13.5px; vertical-align: top; }
+  .ocard-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+  @media (max-width: 900px) { .ocard-two { grid-template-columns: 1fr; } }
+  .ocard-mini { border: 1px solid #bac8ff; border-top: 4px solid #4c6ef5; border-radius: 8px; padding: 10px 12px; background: #f8f9ff; }
+  .ocard-mini.meta { border-color: #d0bfff; border-top-color: #6741d9; background: #f8f5ff; }
+  .mini-title { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+  .mini-q { font-size: 13.5px; color: #495057; margin: 2px 0; }
+  .mini-call { margin-top: 6px; padding: 4px 8px; border-radius: 6px; font-size: 13.5px; }
+  .mini-call.ok, .ocard-calls td.ok { background: #ebfbee; }
+  .mini-call.bad, .ocard-calls td.bad { background: #fff5f5; }
+  .ocard-rule { margin-top: 10px; padding: 8px 12px; border-radius: 8px; background: #fff9db; border: 1px solid #ffe066; font-size: 14px; }
+  .rule-title { font-weight: 700; font-size: 15px; margin-bottom: 2px; }
+  .ocard-rule p { margin: 4px 0; }
+  .rule-steps { margin: 4px 0 8px; padding-left: 22px; }
+  .rule-cmp { background: #fff; border-radius: 6px; max-width: 760px; }
+  .rule-cmp th:first-child { width: 230px; color: #495057; font-weight: 600; }
+  .quiz { margin-top: 10px; padding: 10px 12px; border: 1px dashed #4c6ef5; border-radius: 8px; background: #f8f9ff; }
+  .quiz-opts { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+  .quiz button.picked-ok { background: #d3f9d8; border-color: #2b8a3e; }
+  .quiz button.picked-bad { background: #ffe3e3; border-color: #e03131; }
+  .quiz-out { font-size: 14px; }
+  body.lvl-beginner .adv-only { display: none !important; }
+  .levels { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0 0; }
+  .levels button { font: inherit; padding: 6px 14px; border-radius: 20px; border: 2px solid var(--line); background: #fff; cursor: pointer; font-weight: 600; }
+  .levels button.on[data-level=beginner] { border-color: #2b8a3e; background: #ebfbee; }
+  .levels button.on[data-level=advanced] { border-color: #e03131; background: #fff5f5; }
+  #levelHint { font-size: 13.5px; }
+  .lvl-note { margin: 12px 0; padding: 8px 12px; border-left: 4px solid #e03131; background: #fff5f5; border-radius: 0 8px 8px 0; font-size: 14px; }
+  .lvl-note button { margin-left: 6px; }
+  .adv-small { font-size: 13px; color: #862e9c; background: #f8f0fc; border-radius: 6px; padding: 5px 9px; margin: 6px 0; }
+  .node:focus { outline: none; }
+  .node:focus rect { stroke: #000; stroke-width: 3; stroke-dasharray: 4 2; }
+  .limits li { margin: 3px 0; }
+  label.chk { font-size: 13px; color: var(--muted); display: inline-flex; gap: 5px; align-items: center; cursor: pointer; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🧠 Карта об'єктів, класів і методів Python</h1>
+  <div class="levels" role="group" aria-label="Рівень складності">
+    <b>Рівень:</b>
+    <button data-level="beginner">🟢 Beginner</button>
+    <button data-level="advanced">🔴 Advanced</button>
+    <span id="levelHint" class="muted"></span>
+  </div>
+  <p>Клікніть (або виберіть клавішею Tab і натисніть Enter) будь-який <b>клас</b> або <b>об'єкт</b> на схемі — числа, рядки, списки, ваші класи і навіть <b>функції</b>: вони теж об'єкти. Для об'єктів можна викликати методи і побачити, де Python їх знаходить і що вони роблять з об'єктом.</p>
+</header>
+
+<div class="wrap">
+  <div class="card" id="mapCard">
+    <svg id="map" viewBox="0 0 1180 470" aria-label="Схема класів Python"></svg>
+    <div class="legend">
+      <span><i class="sw"></i> <code>__class__</code> — «є екземпляром»</span>
+      <span><i class="sw dash"></i> <code>__bases__</code> — «успадковується від»</span>
+      <span class="adv-only"><i class="sw meta"></i> клас є екземпляром <code>type</code></span>
+      <span class="adv-only"><i class="sw" style="border-top:2px dashed #e67700"></i> <code>__self__</code> — до кого прив'язано метод</span>
+      <label class="chk adv-only"><input type="checkbox" id="showMeta"> показати всі стрілки клас → <code>type</code></label>
+      <button class="run" id="resetAll">↺ скинути об'єкти</button>
+    </div>
+    <div class="legend">
+      Що метод робить з об'єктом:
+      <span><span class="tag mut">змінює</span> сам об'єкт</span>
+      <span><span class="tag new">нове</span> повертає новий об'єкт</span>
+      <span><span class="tag info">дані</span> лише читає / відповідає</span>
+      <span><span class="tag create">створення</span> працює при створенні</span>
+      <span><span class="tag none">None</span> метод вимкнено</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="on" data-tab="details">1. Клас / об'єкт</button>
+    <button data-tab="create">2. Як створюються: об'єкти, функції, методи</button>
+  </div>
+  <div class="card tabpane on" id="tab-details"><div id="details"></div></div>
+  <div class="card tabpane" id="tab-create"><div id="create"></div></div>
+
+  <div class="card adv-only" style="margin-top:16px">
+    <h2>📐 Межі моделі: що спрощено в цій карті</h2>
+    <ul class="limits">
+      <li><b>Методи вибрані, а не всі.</b> У кожного класу показано найважливіші методи; повний список дає <code>dir(obj)</code>.</li>
+      <li><b>MRO рахується алгоритмом C3</b>, як у Python, але на схемі всі класи мають одного батька. Множинне успадкування (<code>class Z(X, Y)</code>) — урок 21.</li>
+      <li><b>Пошук атрибута без дескрипторів.</b> Насправді <code>@property</code> та інші дескриптори даних у класі перемагають <code>obj.__dict__</code> (урок 24).</li>
+      <li><b><code>id()</code> умовний.</b> Тут це лічильник симуляції, а не реальна адреса в пам'яті.</li>
+      <li><b><code>__init__</code> не завжди викликається</b>: лише коли <code>__new__</code> повернув екземпляр цього класу.</li>
+      <li><b><code>object.__eq__</code></b> для різних об'єктів повертає <code>NotImplemented</code>; оператор <code>==</code> тоді пробує <code>other.__eq__</code>, а в підсумку дає <code>False</code>.</li>
+      <li><b>Копії поверхневі</b>: <code>list.copy()</code>, <code>+</code> і зрізи створюють новий зовнішній список, але елементи в ньому ті самі об'єкти.</li>
+      <li><b>Кортеж хешується, лише якщо всі елементи хешовані</b>: <code>hash(([1, 2], 540))</code> → <code>TypeError</code>.</li>
+    </ul>
+  </div>
+</div>
+
+<script src="classes_object_map.js"></script>
+</body>
+</html>
